@@ -16,9 +16,8 @@ namespace CncfLanguageAnalyzer
 
             var github = new Github(token);
 
-            var transformedRecords = new List<CncfRecordWithLanguage>();
-            await ReadCsv(github, inputFilePath);
-            WriteCsv(transformedRecords, outputFilePath);
+            var records = await ReadCsv(github, inputFilePath);
+            WriteCsv(records, outputFilePath);
         }
 
         private static async Task<IEnumerable<CncfRecordWithLanguage>> ReadCsv(Github github, string inputFilePath)
@@ -30,12 +29,12 @@ namespace CncfLanguageAnalyzer
                 var records = csv.GetRecords<CncfRecord>();
                 foreach (var record in records)
                 {
+                    var transformedRecord = CncfRecordWithLanguage.Create(record);
                     if (!string.IsNullOrEmpty(record.GithubRepo))
-                    {
-                        var transformedRecord = CncfRecordWithLanguage.Create(record);
-                        transformedRecord.Languages = await github.GetMostUsedLanguageForRepo(transformedRecord.GithubRepo);
-                        transformedRecords.Add(transformedRecord);
+                    {                        
+                        transformedRecord.Languages = await github.GetMostUsedLanguageForRepo(transformedRecord.GithubRepo);                        
                     }
+                    transformedRecords.Add(transformedRecord);
                 }
                 return transformedRecords;
             }
